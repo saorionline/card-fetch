@@ -4,6 +4,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyPlugin = require('copy-webpack-plugin'); 
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin'); 
 const ProgressWebpackPlugin = require('progress-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 const devServer = {
     static: path.resolve(__dirname, 'src'), // Path to your source directory
@@ -78,6 +79,9 @@ module.exports = {
         }),
     new CssMinimizerPlugin(), // Minify CSS in production mode
     new ProgressWebpackPlugin(), // Show progress during build
+    new Dotenv({
+      path: '.env'
+    })
   ],
 
   // Optimization (optional, mostly for production builds)
