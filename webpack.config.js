@@ -1,10 +1,12 @@
-const path = require('path'); 
+const path = require('path-browserify'); 
+const webpack = require('webpack');
+
 const HtmlWebpackPlugin = require('html-webpack-plugin'); 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin'); 
 const CopyPlugin = require('copy-webpack-plugin'); 
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin'); 
 const ProgressWebpackPlugin = require('progress-webpack-plugin');
-const Dotenv = require('dotenv-webpack');
+
 
 const devServer = {
     static: path.resolve(__dirname, 'src'), // Path to your source directory
@@ -16,12 +18,13 @@ const devServer = {
   
 
 module.exports = { 
+
     devServer,
     // Entry point for your application 
     entry: './src/index.js', 
     // Output configuration 
     output: { 
-        filename: 'bundle.js', 
+        filename: '[name].bundle.js', 
         path: path.resolve(__dirname, 'dist'), // Output directory 
         assetModuleFilename: 'assets/images/[hash][ext][query]',
         clean: true, // Enable cleaning of the output directory
@@ -66,6 +69,7 @@ module.exports = {
             }, 
             // Plugins configuration
     plugins: [
+        new webpack.ProgressPlugin(),
         new HtmlWebpackPlugin({
           template: './src/index.html', // Use your HTML template
         }),
@@ -77,11 +81,13 @@ module.exports = {
             { from: 'src/assets', to: 'assets' }, // Copy assets folder
           ],
         }),
+        new webpack.DefinePlugin({
+          'process.env.PLATZI_API': JSON.stringify('https://api.escuelajs.co/api/v1/products'),
+          'process.env.LIMIT': JSON.stringify(10),  // Replace 10 with your desired limit value
+
+        }),
     new CssMinimizerPlugin(), // Minify CSS in production mode
     new ProgressWebpackPlugin(), // Show progress during build
-    new Dotenv({
-      path: '.env'
-    })
   ],
 
   // Optimization (optional, mostly for production builds)
@@ -91,6 +97,7 @@ module.exports = {
   resolve: {
     extensions: ['.js'],
     alias: {
+      path: path.resolve(__dirname, 'node_modules/path-browserify'),
       '@images': path.resolve(__dirname, 'src/assets/images/'),
     }
   },

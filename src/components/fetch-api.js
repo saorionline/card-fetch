@@ -1,83 +1,50 @@
-import { cardSketch } from './structure-card.js';
+const appElement = document.getElementById("app");
 
-const url = process.env.PLATZI_API;
-
-export async function pagesWithProducts(page) {
-  return fetchPages(page)
-  .then( products => loadElements(products));
-}
-
-async function fetchPages(page){
-  const offset = (page - 1 ) * STEPS;
-  const limit = Number(process.env.LIMIT) || 10;
-
-  const url = `${PLATZI_API}?offset=${offset}&limit=${limit}`;
+export const getData = async (page = 1) => {
   try {
-    const products = await getData(url);
-    return products
-  } catch(error) {
-    console.error('Error al obtener los datos:', error)
-  }
-}
+    const api = process.env.PLATZI_API;
 
-const getData = async (url) => {
-  try{
-    const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`La solicitud ha fallado con el error ${response.status}`);
-      }
-      const rawProducts = await response.json();
-      const processedProducts = rawProducts.map((product, index) => cardSketch(product, index));
-      return processedProducts;
-  } catch(error) {
-    if (error.name === 'NetworkError')  {
-      throw new Error('Error en la obtención de datos');
-    } else {
-      throw Error
+    const response = await fetch(`${api}?offset=${10 * (page - 1)}&limit=10`);
+    if (!response.ok) {
+      throw new Error(`La solicitud de API ha fallado bajo el estado: ${response.status}`);
     }
-    return [];
+    const rawProducts = await response.json();
+    return Promise.resolve(rawProducts); // Return a Promise resolving with products
+  } catch (error) {
+    console.error("Obteniendo datos... fallido:", error);
+    // Handle errors based on their type (optional):
+    return Promise.reject([]); // Return a rejected Promise with an empty array
   }
-}
+};
 
-async function loadElements() {
+export async function loadData() {
   try {
-    const products = await getData(); // Wait for data from getData
-    
-    if (!products || products.length === 0) {
-      // Handle empty product data (optional)
-      console.warn("No se han encontrado productos.");
-      return;
-    }
-    const makeSection = document.createElement('section');
-    makeSection.classList.add('card');
-    const sectionSelector = document.querySelector('.card'); 
+    const products = await getData();
+    const nodeArray = products.map((product) => {
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('items');
 
-    if(sectionSelector) {
-      const fragment = document.createDocumentFragment();
-      products.forEach((product) => {
-        const image = document.createElement('img');
-        image.className = 'img'; // Add the class "img"
-        image.src = product.images[0]; // Access the first image URL
-        image.alt = product.title || "New Product"; // Set alt text (use product title if available)
-  
-        // Create the title element with price
-        const title = document.createElement('h2');
-        title.textContent = `${product.title}`; // Set the title text
-        const priceSpan = document.createElement('small');
-        priceSpan.textContent = `$${product.price}`; // Set the price text
-        title.appendChild(priceSpan); // Append the price span to the title element
-          try {
-            fragment.append(image,title)
-          } catch (error) {
-            console.error ('Error al añadir elementos:', error);
-          }
+      //Loop through product images array (assuming product.images exists)
+      product.images.forEach((imageUrl, index) => {
+        if (index === 1) { // Check for the functional image
+          const image = document.createElement('img');
+          image.className = 'img';
+          image.src = `${imageUrl}`;
+          image.src = imageUrl.slice(1, -1); // Remove first and last character (assuming quotes)
+          image.alt = "New Product";
+          imageContainer.appendChild(image);
         }
-      );
-     sectionSelector.appendChild(fragment);     
-    } else {
-      console.error('Error: Elemento contenedor ".box" no encontrado');
-      }
-    } catch (error) {
-      console.error('Error en la obtención de datos:', error);
-    }
+      });
+
+      //Wrap images and priceAndTitle (if using container)
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.appendChild(imageContainer);
+      return card;
+    });
+
+    appElement.append(...nodeArray);
+  } catch (error) {
+    console.error("Disculpa, error!:", error);
+  }
 }
